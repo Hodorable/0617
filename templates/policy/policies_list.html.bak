@@ -1,0 +1,68 @@
+{% load i18n %}
+{% load url from future %}
+
+
+
+<script type="text/javascript">
+    function getResults(rulesInfo){
+	var xmlhttp;    
+	if (window.XMLHttpRequest){
+	    xmlhttp=new XMLHttpRequest();
+	}
+	else{
+	    xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+	}
+	xmlhttp.onreadystatechange=function(){
+	    if (xmlhttp.readyState==4 && xmlhttp.status==200){       			
+	        var results=xmlhttp.responseText;
+		alert("results="+results);
+		var table=document.getElementById("table_results");
+		var rules=rulesInfo.split("@@");
+		for (var i=0; i<rules.length-1; i++){
+		    var parts=rules[i].split("&");
+		    var rule="";
+			
+		    rule="Name:<br>";
+		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[3]+"<br>";
+
+		    rule+="Objects:<br>";
+		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[0]+"<br>";
+
+		    var con=parts[1];
+		    con=con.substr(0, con.length-1);
+		    con=con.replace(/\|/g, "<br>&nbsp;&nbsp;&nbsp;&nbsp;");
+		    rule+="Conditions:<br>";
+		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+con+"<br>";
+
+		    rule+="Actions:<br>";
+		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[4]+"<br>";
+
+		    rule+="Data:<br>";
+		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[2]+"<br>";
+
+
+		    var data0='<tr><td>'+rule+'</td></tr>';
+		    var data1='<tr><td>'+results+'</td></tr>';
+		    var row=table.insertRow(table.rows.length);
+		    var col;
+
+		    col=row.insertCell(0);
+		    col.innerHTML = data0;
+
+		    col=row.insertCell(1);
+		    col.innerHTML = data1;
+		}
+	    }
+        }
+	xmlhttp.open("GET","show_results",true);
+	xmlhttp.send();
+    }
+</script>
+
+
+<table width="100%" id="table_results"  border="1" class="t1">
+    <thead>
+        <th width="50%">Rule</th>
+        <th width="30%">Results</th>
+    </thead>
+</table>

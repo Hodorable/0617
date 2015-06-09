@@ -1,0 +1,814 @@
+{% load i18n %}
+{% load url from future %}
+<style type="text/css">
+table.t1{
+    border:1px solid #cad9ea;
+    color:#666;
+}
+table.t1 th {
+    background-image: url(th_bg1.gif);
+    background-repeat::repeat-x;
+    height:30px;
+}
+table.t1 td,table.t1 th{
+    border:1px solid #cad9ea;
+    padding:0 1em 0;
+}
+table.t1 tr.a1{
+    background-color:#f5fafe;
+}
+
+
+
+.box{
+ border:1px solid #C0C0C0;
+ width:135px;
+ height:23px;
+ clip:rect(0px,181px,18px,0px);
+ overflow:hidden;
+}
+.box2{
+ border:1px solid #F4F4F4;
+ width:160px;
+ height:23px;
+ clip:rect(0px,179px,16px,0px);
+ overflow:hidden;
+}
+.box3{
+ border:1px solid #F4F4F4;
+ width:100px;
+ height:23px;
+ clip:rect(0px,179px,16px,0px);
+ overflow:hidden;
+}
+select{
+ position:relative;
+ left:-2px;
+ top:-2px;
+ font-size:14px;
+ width:183px;
+ line-height:14px;
+ border:0px;color:#909993;
+}
+</style>
+
+
+
+
+<script type="text/javascript">
+	var objectsNames=new Array();
+	var attrParts=new Array();
+	function getObjectsAndAttr(){
+	    //alert("aaaaaaa");
+            $.get("get_objects_and_attr", function(data){
+                //alert("objects : "+data);
+		var contents=data.split("&");
+		var objNames=contents[0].split(",");
+		for (var i=0; i<objNames.length-1; i++){
+		    objectsNames[i]=objNames[i];
+		}
+		objectsNames=objectsNames.sort();
+		addObjectsContent("sel_objects_0_1");
+
+		var attrs=contents[1].split(";");
+		for (var j=0; j<attrs.length-1; j++){
+		    attrParts[j] = attrs[j];
+		}
+
+		addConditionsContent("sel_conditions_0_1");
+            });
+	}
+	getObjectsAndAttr();
+	
+	function addObjectsContent(objId){
+            var selObj=document.getElementById(objId);
+	    for (var i=0; i<objectsNames.length; i++){
+	        selObj.options.add(new Option(objectsNames[i], objectsNames[i]));
+	    }
+	}
+
+	function addConditionsContent(objId){
+	    var conObj=document.getElementById(objId);
+	    conObj.options.add(new Option("Same_group", "Same_group"));
+	    conObj.options.add(new Option("Not Same_group", "Not Same_group"));
+	    conObj.options.add(new Option("Equal(==)", "Equal(==)"));
+	    conObj.options.add(new Option("Not Equal(!=)", "Not Equal(!=)"));
+	    conObj.options.add(new Option("Greater Than(>)", "Greater Than(>)"));
+	    conObj.options.add(new Option("Greater or Equal(>=)", "Greater or Equal(>=)"));
+	    conObj.options.add(new Option("Less Than(<)", "Less Than(<)"));
+	    conObj.options.add(new Option("Less or Equal(<=)", "Less or Equal(<=)"));
+	}
+
+	var numRowIndex=0;
+	function AddRuleRow(){
+		++numRowIndex;
+        var tableId=document.getElementById("rule_table");
+        var index=tableId.rows.length-1
+        var data0='<tr><td><input type="checkbox" id="cbox_'+index+'"></input></td></tr>';
+        var data1='<tr><td><input type="text" size="5%" id="name_'+numRowIndex+'"></td></tr>';
+        var data2='<tr><td>'
+		+'<div id="div_Objects_inner_'+numRowIndex+'_1">'
+		+'<select id="sel_objects_'+numRowIndex+'_1" class="box2" onchange="changeConditionsSelValue('+numRowIndex+')">'
+		+'<option></option>'
+		+'</select>'
+		+' <input type="button" id="btnAddObjects_'+numRowIndex+'_1" onclick="addSelObjects('+(numRowIndex)+')" value="add"/>'
+		+'<input type="button" id="selObjNum_'+numRowIndex+'" value="1" style="display:none"/>'
+		+'</div>'
+		+'</td></tr>';
+		
+        var data3='<tr><td>'
+		+'<div id="div_conditions_'+numRowIndex+'_1">'
+		+'<div>'
+		+'<b>Condition:</b>'
+		+' <select id="sel_conditions_'+numRowIndex+'_1" class="box2" onchange="showConditionDetail('+numRowIndex+')">'
+		+'<option></option>'
+		+'<option>Same_group</option>'
+		+'<option>Not Same_group</option>'
+		+'<option>Equal(==)</option>'
+		+'<option>Not Equal(!=)</option>'
+		+'<option>Greater Than(>)</option>'
+		+'<option>Greater or Equal(>=)</option>'
+		+'<option>Less Than(<)</option>'
+		+'<option>Less or Equal(<=)</option>'
+		+'</select>'
+		+' <input type="button" id="btn_con_'+numRowIndex+'_1" onclick="addSelConditions('+numRowIndex+')" value="Add"/></input>'
+		+'<input type="button" id="conInputFrameNum_'+numRowIndex+'_1" value="0" style="display:none"/>'
+		+'<input type="button" id="conFlag_'+numRowIndex+'_1" value="" style="display:none"/>'
+		+'<input type="button" id="conSelNum_'+numRowIndex+'" value="1" style="display:none"/>'
+		+'</div>'
+		+'<div>'
+		+'<div id="divInputFrame_'+numRowIndex+'_1"></div>'
+		+'</div>'
+		+'</div>'
+		+'</td></tr>';
+		
+        var data4='<tr><td>'
+		+'<input type="checkbox" id="cbox_Monitor_'+numRowIndex+'" onchange="monitoring('+numRowIndex+')"> Monitoring</input><br>'
+    	        +'<input type="checkbox" id="cbox_Pro_'+numRowIndex+'"> Proactive</input><br>'
+    	        +'<input type="checkbox" id="cbox_Rea_'+numRowIndex+'" onchange="reactive()"> Reactive</input><br>'
+		+'<input type="button" id="hidDataFrom_'+numRowIndex+'" value="Actions" style="display:none"/>'
+		+'<input type="button" id="hidDataContents_'+numRowIndex+'" value="empty" style="display:none"/>'
+		+'</td></tr>';
+		
+        var data5='<tr><td>'
+		+'<div id="div_data_'+numRowIndex+'">'
+		+'<input type="button" id="hidden_'+numRowIndex+'" value="1" style="display:none"/>'
+    	        +'</div>'
+		+'</td></tr>';
+
+        var row=tableId.insertRow(tableId.rows.length);
+        var col;
+        col=row.insertCell(0);
+        col.innerHTML = data0;
+
+        col=row.insertCell(1);
+        col.innerHTML = data1;
+
+        col=row.insertCell(2);
+        col.innerHTML = data2;
+
+        col=row.insertCell(3);
+        col.innerHTML = data3;
+
+        col=row.insertCell(4);
+        col.innerHTML = data4;
+
+        col=row.insertCell(5);
+        col.innerHTML = data5;
+	addObjectsContent("sel_objects_"+numRowIndex+"_1");
+    }
+   
+    function DeleteRuleRow(){
+        var tableId=document.getElementById("rule_table");
+        var rows=tableId.rows.length;
+        var delArray=new Array();
+		for (var j=0; j<rows-1; j++){
+			delArray[j]=1;
+		}
+
+        var nums=0;
+        for (var i=0; i<rows-1; i++){
+            var cboxId=document.getElementById("cbox_"+i);
+            if (cboxId.checked){
+                tableId.deleteRow(i-nums+1); 
+                nums++;
+				delArray[i]=0;
+				numRowIndex--;
+            }
+        }
+	
+		var row_index=0;
+		for (var j=0; j<rows-1; j++){
+			if (delArray[j]==1){
+				var firstCbox=document.getElementById("cbox_"+j);
+				firstCbox.setAttribute("id", "cbox_"+row_index);
+				var inputText=document.getElementById("name_"+j);
+				inputText.setAttribute("id", "name_"+row_index);
+				var btnObjNum=document.getElementById("selObjNum_"+j);
+				for (var k=1; k<=btnObjNum.value; k++){
+					var selObjectsObj=document.getElementById("sel_objects_"+j+"_"+k);
+					selObjectsObj.setAttribute("id", "sel_objects_"+row_index+"_"+k);
+					selObjectsObj.setAttribute("onchange", "changeConditionsSelValue("+row_index+")");
+					var divObjInner=document.getElementById("div_Objects_inner_"+j+"_"+k);
+					divObjInner.setAttribute("id", "div_Objects_inner_"+row_index+"_"+k);
+					var btnObjectsAddObj=document.getElementById("btnAddObjects_"+j+"_"+k);
+					btnObjectsAddObj.setAttribute("id", "btnAddObjects_"+row_index+"_"+k);
+					btnObjectsAddObj.setAttribute("onclick", "addSelObjects("+row_index+")");
+				}
+				btnObjNum.setAttribute("id", "selObjNum_"+row_index);
+
+				var conSelNumObj=document.getElementById("conSelNum_"+j);
+				for (var k=1; k<=conSelNumObj.value; k++){
+					var divInputFrameObj=document.getElementById("divInputFrame_"+j+"_"+k);
+					divInputFrameObj.setAttribute("id", "divInputFrame_"+row_index+"_"+k);
+					var divConObj=document.getElementById("div_conditions_"+j+"_"+k);
+					divConObj.setAttribute("id", "div_conditions_"+row_index+"_"+k);
+					var selConObj=document.getElementById("sel_conditions_"+j+"_"+k);
+					selConObj.setAttribute("id", "sel_conditions_"+row_index+"_"+k);
+					selConObj.setAttribute("onchange", "showConditionDetail("+row_index+")");
+					var conInputFrame=document.getElementById("conInputFrameNum_"+j+"_"+k);
+					conInputFrame.setAttribute("id", "conInputFrameNum_"+row_index+"_"+k);
+					if (selConObj.value!=""){
+						var divDescObj=document.getElementById("div_desc_con_"+j+"_"+k);
+						divDescObj.setAttribute("id", "div_desc_con_"+row_index+"_"+k);
+						var btnConAddObj=document.getElementById("btn_con_add_"+j+"_"+k);
+						btnConAddObj.setAttribute("id", "btn_con_add_"+row_index+"_"+k);
+						btnConAddObj.setAttribute("onclick", "addConditionsInputFrame("+row_index+","+k+")");
+						for (var z=1; z<=conInputFrame.value; z++){
+							var argObj=document.getElementById("sel_conditions_"+j+"_"+k+"_"+z);
+							argObj.setAttribute("id", "sel_conditions_"+row_index+"_"+k+"_"+z);
+						}
+					}
+					var hidFlagObj=document.getElementById("conFlag_"+j+"_"+k);
+					hidFlagObj.setAttribute("id", "conFlag_"+row_index+"_"+k);
+					var btnAddObj=document.getElementById("btn_con_"+j+"_"+k);
+					btnAddObj.setAttribute("id", "btn_con_"+row_index+"_"+k);
+					btnAddObj.setAttribute("onclick", "addSelConditions("+row_index+")");
+				}
+				conSelNumObj.setAttribute("id", "conSelNum_"+row_index);
+			
+
+				var cboxMonObj=document.getElementById("cbox_Monitor_"+j);
+				cboxMonObj.setAttribute("id", "cbox_Monitor_"+row_index);
+				cboxMonObj.setAttribute("onchange", "monitoring("+row_index+")");
+				var cboxProObj=document.getElementById("cbox_Pro_"+j);
+				cboxProObj.setAttribute("id", "cbox_Pro_"+row_index);
+				var cboxReaObj=document.getElementById("cbox_Rea_"+j);
+				cboxReaObj.setAttribute("id", "cbox_Rea_"+row_index);
+				var hidDataFormObj=document.getElementById("hidDataFrom_"+j);
+				hidDataFormObj.setAttribute("id", "hidDataFrom_"+row_index);
+				var hidDataContentsObj=document.getElementById("hidDataContents_"+j);
+				hidDataContentsObj.setAttribute("id", "hidDataContents_"+row_index);
+			
+				var divData=document.getElementById("div_data_"+j);
+				divData.setAttribute("id", "div_data_"+row_index);
+				var hiddenDataObj=document.getElementById("hidden_"+j);
+				hiddenDataObj.setAttribute("id", "hidden_"+row_index);
+				for (var z=1; z<=hiddenDataObj.value; z++){
+					var divDataContentsObj=document.getElementById("div_data_contents_"+j+"_"+z);
+					if (divDataContentsObj!=null){
+						divDataContentsObj.setAttribute("id", "div_data_contents_"+row_index+"_"+z);
+					var selDataObj=document.getElementById("sel_data_"+j+"_"+z);
+					selDataObj.setAttribute("id", "sel_data_"+row_index+"_"+z);
+					var btnDataAddObj=document.getElementById("btn_data_add_"+j+"_"+z);
+					btnDataAddObj.setAttribute("id", "btn_data_add_"+row_index+"_"+z);
+					btnDataAddObj.setAttribute("onclick", "addSelData("+row_index+")");
+
+					}
+				}
+				row_index++;
+			}
+		}
+    }
+
+
+	function addSelObjects(iRowIndex){
+		var hidSelObj=document.getElementById("selObjNum_"+iRowIndex);
+		var divInnerDiv=document.getElementById("div_Objects_inner_"+iRowIndex+"_"+hidSelObj.value);
+		//alert("div_Objects_inner_"+iRowIndex+"_"+hidSelObj.value);
+		//alert(divInnerDiv);
+		var newSelDiv=document.createElement("div");
+		++hidSelObj.value;
+		newSelDiv.setAttribute("id","div_Objects_inner_"+iRowIndex+"_"+hidSelObj.value);
+		newSelDiv.innerHTML='<select id="sel_objects_'+iRowIndex+'_'+hidSelObj.value+'" class="box2" onchange="changeConditionsSelValue('+iRowIndex+')">'
+		+'<option></option>'
+		+'</select>'
+		+' <input type="button" id="btnAddObjects_'+iRowIndex+'_'+hidSelObj.value+'" onclick="addSelObjects('+iRowIndex+')" value="add"/>'
+		divInnerDiv.appendChild(newSelDiv);
+		addObjectsContent("sel_objects_"+iRowIndex+"_"+hidSelObj.value);
+	}
+	
+	
+	Array.prototype.remove=function(dx) { 
+		var index=-1;
+		for (var i=0; i<selectContent.length; i++){
+			if(this[i]==dx){
+				index=i;
+			}
+		}
+		if (index != -1){
+			for (var j=index; j<selectContent.length-1; j++){
+				this[j]=this[j+1];
+			}
+			this.length-=1 
+		}
+	} 
+	
+	Array.prototype.hasItem=function(item){
+		for (var i=0; i<selectContent.length; i++){
+			if (selectContent[i]==item){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	
+	var selectContent=new Array();
+	var iSelOption=0;
+	function changeConditionsSelValue(iRowIndex){
+		//fill conditions select
+		fillConditionsSelect(iRowIndex);
+		var hidDataFromObj=document.getElementById("hidDataFrom_"+iRowIndex);
+		hidDataFromObj.value="Objects";
+		monitoring(iRowIndex);
+	}
+	
+	function fillConditionsSelect(rowIndex){
+		freshArraySelectContent(rowIndex);
+		var hidConSelObj=document.getElementById("conSelNum_"+rowIndex);
+		for (var k=1; k<=hidConSelObj.value; k++){
+			var hidObj=document.getElementById("conInputFrameNum_"+rowIndex+"_"+k);
+			var numArgsFrameNum=hidObj.value;
+			for (var z=1; z<=numArgsFrameNum; z++){
+				var selConditions=document.getElementById("sel_conditions_"+rowIndex+"_"+k+"_"+z);
+				var oldValue=selConditions.value;
+				selConditions.options.length=0;
+				selConditions.options.add(new Option(""));
+				for (var i=0; i<selectContent.length; i++){
+					selConditions.options.add(new Option(selectContent[i]));
+				}
+				for (var i=0; i<selConditions.options.length; i++){
+					if (selConditions.options[i].text==oldValue){
+						selConditions.options[i].selected="selected";
+					}
+				}
+			}
+        }
+    }
+	
+	
+	function freshArraySelectContent(iRowIndex){
+	    iSelOption=0;
+	    selectContent.length=0;
+	    var hidSelObj=document.getElementById("selObjNum_"+iRowIndex);
+	    for (var j=1; j<=(hidSelObj.value); j++){
+		//alert("hidSelObj.value="+hidSelObj.value);
+	    	var selObj=document.getElementById("sel_objects_"+iRowIndex+"_"+j);
+		//alert("j="+j);
+		//alert("selObj.value="+selObj.value);
+		if (selObj.value!=""){
+		    for (var k=0; k<attrParts.length; k++){
+		        var contents=attrParts[k].split(":");
+		        var name=contents[0];
+		        //alert("name="+name);
+		        var attrs=contents[1].split(",");
+		        if (selObj.value==name){
+		    	    for (var z=0; z<attrs.length-1; z++){
+	    	    	        selectContent[iSelOption++]=name+"."+attrs[z];
+		    	        //alert("attrs[z]="+attrs[z]);
+		    	    }
+		        }
+		    }
+		    //alert("ok");
+		}
+	    }
+	    selectContent=selectContent.sort();
+	}
+
+
+/*
+	function freshArraySelectContent(iRowIndex){
+	    iSelOption=0;
+	    selectContent.length=0;
+	    var hidSelObj=document.getElementById("selObjNum_"+iRowIndex);
+	    for (var j=1; j<=(hidSelObj.value); j++){
+	    	var selObj=document.getElementById("sel_objects_"+iRowIndex+"_"+j);
+		alert("selObj.value="+selObj.value);
+	    	if (selObj.value=="servers" && !selectContent.hasItem("Servers.id")){
+	    		selectContent[iSelOption++]="Servers.id";
+	    		selectContent[iSelOption++]="Servers.name";
+	    		selectContent[iSelOption++]="Servers.tenant";
+	    	}
+	    	else if (selObj.value=="networks" && !selectContent.hasItem("Networks.id")){
+	    		selectContent[iSelOption++]="Networks.id";
+	    		selectContent[iSelOption++]="Networks.name";
+	    		selectContent[iSelOption++]="Networks.tenant";
+			selectContent[iSelOption++]="Networks.share";
+	    	}
+	    }
+	    selectContent=selectContent.sort();
+	}*/
+	
+	function addSelConditions(iRowIndex){
+		var hidConSelObj=document.getElementById("conSelNum_"+iRowIndex);
+		var divInnerDiv=document.getElementById("div_conditions_"+iRowIndex+"_"+hidConSelObj.value);
+		var newSelDiv=document.createElement("div");
+		++hidConSelObj.value;
+		newSelDiv.setAttribute("id","div_conditions_"+iRowIndex+"_"+hidConSelObj.value);
+		newSelDiv.innerHTML='<div><b>Condition: </b><select id="sel_conditions_'+iRowIndex+'_'+hidConSelObj.value+'" class="box2" onchange="showConditionDetail('+iRowIndex+')">'
+		+'<option></option>'
+		+'<option>Same_group</option>'
+		+'<option>Not Same_group</option>'
+		+'<option>Equal(==)</option>'
+		+'<option>Not Equal(!=)</option>'
+		+'<option>Greater Than(>)</option>'
+		+'<option>Greater or Equal(>=)</option>'
+		+'<option>Less Than(<)</option>'
+		+'<option>Less or Equal(<=)</option>'
+		+'</select>'
+		+' <input type="button" id="btn_con_'+iRowIndex+'_'+hidConSelObj.value+'" onclick="addSelConditions('+iRowIndex+')" value="Add"/></input>'
+		+'<input type="button" id="conInputFrameNum_'+iRowIndex+'_'+hidConSelObj.value+'" value="0" style="display:none"/> '
+		+'<input type="button" id="conFlag_'+iRowIndex+'_'+hidConSelObj.value+'" value="" style="display:none"/>'
+		+'</div>'
+		+'<div><div id="divInputFrame_'+iRowIndex+'_'+hidConSelObj.value+'"></div></div>'
+		divInnerDiv.parentNode.appendChild(newSelDiv);
+		changeConditionsSelValue(iRowIndex);
+	}
+	
+	
+	function monitoring(iRowIndex){
+		freshArraySelectContent(iRowIndex);
+		var hidDataFromObj=document.getElementById("hidDataFrom_"+iRowIndex);
+		var hidDataContentsObj=document.getElementById("hidDataContents_"+iRowIndex);
+		var monitor=document.getElementById("cbox_Monitor_"+iRowIndex);
+		var divData=document.getElementById("div_data_"+iRowIndex);
+			
+		//delete data selects
+		var hidden=document.getElementById("hidden_"+iRowIndex);
+		var num=hidden.value;
+			
+		//Objects has changed	
+		if (monitor.checked && hidDataFromObj.value=="Objects" && hidDataContentsObj.value!="empty"){
+			for (var k=1; k<=num; k++){
+				var obj=document.getElementById("sel_data_"+iRowIndex+"_"+k);
+				var oldValue=obj.value;
+				//fresh data select 
+				var strOption='<option></option>';
+				for (var j=0; j<selectContent.length; j++){					
+					strOption+='<option>'+selectContent[j]+'</option>'
+				}
+				obj.innerHTML='<select id="sel_data_'+iRowIndex+'_'+k+'" class="box3">'+strOption+'</select>'
+				+' <input type="button" onclick="addSelData('+iRowIndex+')" value="Add"/></input>';
+				var hasOldValue=false;
+				for (var z=0; z<obj.options.length; z++){
+					if (obj.options[z].text==oldValue){
+						obj.options[z].selected="selected";
+						hasOldValue=true;
+					}
+				}
+				if (hasOldValue==false)
+					obj.options[0].selected="selected";
+			}
+			hidDataFromObj.value="Actions";
+			return ;
+		}
+
+		//check
+		if (monitor.checked){
+			if (selectContent.length!=0){
+				var newDivData=document.createElement("div");
+				newDivData.setAttribute("id", "div_data_contents_"+iRowIndex+"_1");
+				var strOption='<option></option>';
+				for (var j=0; j<selectContent.length; j++){					
+					strOption+='<option>'+selectContent[j]+'</option>'
+				}
+				newDivData.innerHTML='<select id="sel_data_'+iRowIndex+'_1" class="box3">'+strOption+'</select>'
+				+' <input type="button" id="btn_data_add_'+iRowIndex+'_1" onclick="addSelData('+iRowIndex+')" value="Add"/></input>';
+	
+				divData.parentNode.insertBefore(newDivData, divData);
+				hidDataContentsObj.value="full";
+			}
+		}
+		else{
+			for (var k=1; k<=num; k++){
+				var newDivData=document.getElementById("div_data_contents_"+iRowIndex+"_"+k);
+				if (newDivData!=null){
+					newDivData.parentNode.removeChild(newDivData);
+				}
+				hidden.value=1;
+				hidDataContentsObj.value="empty";
+			}
+		}
+	}
+	
+	function addSelData(iRow){
+		freshArraySelectContent(iRow);
+		var hidden=document.getElementById("hidden_"+iRow);
+		var index=hidden.value;
+		var divData=document.getElementById("div_data_"+iRow);
+		var newSelData=document.createElement("div");
+		hidden.value++;
+		index++;
+		newSelData.setAttribute("id", "div_data_contents_"+iRow+"_"+index);
+		
+		var strOption='<option></option>';
+		for (var j=0; j<selectContent.length; j++){
+			strOption+='<option>'+selectContent[j]+'</option>';
+		}
+		
+		newSelData.innerHTML='<select id="sel_data_'+iRow+'_'+index+'" class="box3">'+strOption+'</select>'
+		+' <input type="button" id="btn_data_add_'+iRow+'_'+index+'" onclick="addSelData('+iRow+')" value="Add"/></input>';
+		
+		divData.parentNode.insertBefore(newSelData,divData);
+	}
+	
+	function reactive(){
+		for (var i=0; i<=numRowIndex; i++){
+			var rea=document.getElementById("cbox_Rea_"+i);
+			//var divData=document.getElementById("div_data_"+i);
+			
+			if (rea.checked){
+				var newDivReaData=document.createElement("div");
+				newDivReaData.setAttribute("id", "div_data_rea_contents");
+				newDivReaData.innerHTML='<input type="radio" name="rea">Delete</><br>'
+				+'<input type="radio" name="rea">Remove</>'
+				var hid=document.getElementById("hidDataFrom_"+i);
+				rea.parentNode.insertBefore(newDivReaData, hid);
+			}
+			else{
+				var newDivReaData=document.getElementById("div_data_rea_contents");
+				if (newDivReaData!=null){
+					newDivReaData.parentNode.removeChild(newDivReaData);
+				}
+			}
+		}
+	}
+	
+	
+	function addConditionsInputFrame(iRowIndex,iSelIndex){
+		var hidObj=document.getElementById("conInputFrameNum_"+iRowIndex+"_"+iSelIndex);
+		var divObj=document.getElementById("divInputFrame_"+iRowIndex+"_"+iSelIndex);
+		var newSel=document.createElement("select");
+		var index=++(hidObj.value);
+		
+		newSel.setAttribute("id","sel_conditions_"+iRowIndex+"_"+iSelIndex+"_"+index);
+		newSel.setAttribute("class","box");
+		divObj.parentNode.insertBefore(newSel,divObj);
+		fillConditionsSelect(iRowIndex);
+	}
+	
+	
+	function showConditionDetail(iRowIndex){
+		var hidConSelObj=document.getElementById("conSelNum_"+iRowIndex);
+		for (var i=1; i<=hidConSelObj.value; i++){
+			var selObj=document.getElementById("sel_conditions_"+iRowIndex+"_"+i);
+			var hidFlagObj=document.getElementById("conFlag_"+iRowIndex+"_"+i);
+			var hidObj=document.getElementById("conInputFrameNum_"+iRowIndex+"_"+i);
+			if (selObj.value=="Same_group" || selObj.value=="Not Same_group"){
+				if (hidFlagObj.value=="relation"){
+					var divDesc=document.getElementById("div_desc_con_"+iRowIndex+"_"+i);
+					if (divDesc){
+						divDesc.parentNode.removeChild(divDesc);
+						hidFlagObj.value="";
+					}
+					hidObj.value=0;
+				}
+				if (hidFlagObj.value==""){
+					var divObj=document.createElement("div");
+					divObj.setAttribute("id", "div_desc_con_"+iRowIndex+"_"+i);
+					divObj.innerHTML='Using attributes: '
+					+'<input type="button" id="btn_con_add_'+iRowIndex+'_'+i+'" onclick="addConditionsInputFrame('+iRowIndex+','+i+')" value="+"/></input>'
+						
+					var divInputFrame=document.getElementById("divInputFrame_"+iRowIndex+"_"+i);
+					divInputFrame.parentNode.insertBefore(divObj,divInputFrame);
+					hidFlagObj.value="group";
+				}
+			}
+			else if (selObj.value==""){
+				
+			}
+			else{
+				if (hidFlagObj.value=="group"){
+					var divDesc=document.getElementById("div_desc_con_"+iRowIndex+"_"+i);
+					if (divDesc){
+						divDesc.parentNode.removeChild(divDesc);
+						hidFlagObj.value="";
+					}
+					
+					for (var j=1; j<=hidObj.value; j++){
+						var groupObj=document.getElementById("sel_conditions_"+iRowIndex+"_"+i+"_"+j);
+						if (groupObj!=null){
+							groupObj.parentNode.removeChild(groupObj);
+						}
+					}
+					hidObj.value=0;
+				}
+				
+				
+				if (hidFlagObj.value==""){
+					var divObj=document.createElement("div");
+					divObj.setAttribute("id", "div_desc_con_"+iRowIndex+"_"+i);
+					divObj.innerHTML='Using attributes: <br>'
+					+'<select id="sel_conditions_'+iRowIndex+'_'+i+'_1" class="box"></select>  '
+					+'<select id="sel_conditions_'+iRowIndex+'_'+i+'_2" class="box"></select>'
+					
+					var divInputFrame=document.getElementById("divInputFrame_"+iRowIndex+"_"+i);
+					divInputFrame.parentNode.insertBefore(divObj,divInputFrame);
+					
+					hidFlagObj.value="relation";
+					hidObj.value=2;
+				}
+			}
+			fillConditionsSelect(iRowIndex);
+		}
+	}
+	
+	
+	function getL(e){  
+		var l=e.offsetLeft;  
+		while(e=e.offsetParent)
+			l+=e.offsetLeft;  
+		return l;
+	}
+	function getT(e){ 
+		var t=e.offsetTop;  
+		while(e=e.offsetParent)
+			t+=e.offsetTop;  
+		return t;
+	}
+
+
+
+    RULE_SEPARATOR="@@";
+    function generateRule(){
+        var content="";
+        for (var i=0; i<=numRowIndex; i++){
+	    var defaultTableArg="";
+            var cboxFirst=document.getElementById("cbox_"+i);
+            if (cboxFirst.checked){
+		    var btnObjNum=document.getElementById("selObjNum_"+i);
+		    for (var j=1; j<=btnObjNum.value; j++){
+                        var selObjectsObj=document.getElementById("sel_objects_"+i+"_"+j);
+                        var value=selObjectsObj.value;
+                        if (value!=""){
+                            content+=value+",";
+		    	    if (j == 1)
+		    	        defaultTableArg=value+".id";
+		    	}
+		    }
+		    content+="&";
+
+		    var conSelNumObj=document.getElementById("conSelNum_"+i);
+		    for (var k=1; k<=conSelNumObj.value; k++){
+                        var selConObj=document.getElementById("sel_conditions_"+i+"_"+k);
+                        if (selConObj.value!=""){
+                            content+=selConObj.value+":"
+                            var conInputFrame=document.getElementById("conInputFrameNum_"+i+"_"+k);
+                            for (var z=1; z<=conInputFrame.value; z++){
+                                var argObj=document.getElementById("sel_conditions_"+i+"_"+k+"_"+z);
+                                if (argObj.value!="")
+                                    content+=argObj.value+",";
+                            }
+                            content+="|";
+                        }
+		    }
+	            content+="&";
+
+
+	            var dataNumObj=document.getElementById("hidden_"+i);
+		    for (var z=1; z<=dataNumObj.value; z++){
+                        var selDataObj=document.getElementById("sel_data_"+i+"_"+z);
+			if (selDataObj == null)
+			    content+=defaultTableArg+",";
+                        else if (selDataObj.value!="")
+                            content+=selDataObj.value+",";
+		    }
+		    content+="&";
+
+
+		    var nameObj=document.getElementById("name_"+i);
+		    if (nameObj.value=="")
+		    	content+="None";
+		    else
+		    	content+=nameObj.value;
+		    content+="&";
+
+
+		    var monitoring=document.getElementById("cbox_Monitor_"+i);
+		    var proactive=document.getElementById("cbox_Pro_"+i);
+		    var reactive=document.getElementById("cbox_Rea_"+i);
+		    var actionFlag=false;
+		    if (monitoring.checked){
+		    	content+="Monitoring,";
+		    	actionFlag=true;
+		    }
+		    if (proactive.checked){
+		    	content+="Proactive,";
+		    	actionFlag=true;
+		    }
+		    if (reactive.checked){
+		    	content+="Reactive,";
+		    	actionFlag=true;
+		    }
+		    if (actionFlag==false)
+		    	content+="None,";
+
+		    alert("content:"+content);
+            }
+	    content+=RULE_SEPARATOR;
+        }
+        $.get("generate_rule", {msg:content}, function(data){
+            alert("Returned data: "+data);
+        });
+	//getResults(content);
+
+        var tableId=document.getElementById("rule_table");
+        var rows=tableId.rows.length;
+        for (var i=1; i<rows; i++){
+            tableId.deleteRow(1); 
+        }
+	
+	numRowIndex=-1;
+	AddRuleRow();
+    }
+</script>
+
+
+<form action="generate_rule" method="get">
+    <div id="div_table">
+		<table width="100%" id="rule_table"  border="1" class="t1">
+			<thead>
+				<th width="5%"><input type="checkbox"></input></th>
+				<th width="7%">Name</th>
+				<th width="20%">Objects</th>
+				<th width="35%">Violation Conditions</th>
+				<th width="12%">Actions</th>
+				<th width="16%">Data</th>
+			</thead>
+			
+			<tr>
+				<td class="multi_select_column">
+					<input type="checkbox" id="cbox_0"></input>
+				</td>
+
+				<td>
+					<input type="text" size="5%" id="name_0">
+				</td>
+
+				<td>
+					<div id="div_Objects_inner_0_1">
+						<select id="sel_objects_0_1" class="box2" onchange="changeConditionsSelValue(0)">
+							<option></option>
+						</select>
+						<input type="button" id="btnAddObjects_0_1" onclick="addSelObjects(0)" value="add"/>
+						<input type="button" id="selObjNum_0" value="1" style="display:none"/>
+					</div>
+				</td>
+			  
+				<td>
+					<div id="div_conditions_0_1">
+						<div>
+							<b>Condition:</b>
+							<select id="sel_conditions_0_1" class="box2" onchange="showConditionDetail(0)">
+								<option></option>
+							</select>
+							<input type="button" id="btn_con_0_1" onclick="addSelConditions(0)" value="Add"/></input>
+							<input type="button" id="conInputFrameNum_0_1" value="0" style="display:none"/>
+							<input type="button" id="conFlag_0_1" value="" style="display:none"/>
+							<input type="button" id="conSelNum_0" value="1" style="display:none"/>
+						</div>
+						<div>
+							<div id="divInputFrame_0_1"></div>
+						</div>
+					</div>
+				</td>
+			  
+				<td>
+					<input type="checkbox" id="cbox_Monitor_0" onchange="monitoring(0)"> Monitoring</input><br>
+					<input type="checkbox" id="cbox_Pro_0"> Proactive</input><br>
+					<input type="checkbox" id="cbox_Rea_0" onchange="reactive()"> Reactive</input><br>
+					<input type="button" id="hidDataFrom_0" value="Actions" style="display:none"/>
+					<input type="button" id="hidDataContents_0" value="empty" style="display:none"/>
+				</td>
+
+				<td>
+					<div id="div_data_0">
+						<input type="button" id="hidden_0" value="1" style="display:none"/>
+					</div>
+				</td>
+			</tr>
+    
+		</table>
+    </div>
+</form>
+
+
+<div id="div_button">
+    <input type="button" id="btnAdd" onclick="AddRuleRow()" value="Add"/>
+    <input type="button" id="btnDelete" onclick="DeleteRuleRow()" value="Delete"/>
+    <input type="button" id="btnSubmit" onclick="generateRule()" value="submit"/>
+</div>
+ 
+	
+	
