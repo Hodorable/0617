@@ -323,6 +323,21 @@ select{
 		return false;
 	}
 	
+    Array.prototype.unique2=function()
+    {
+        var n={};
+        var temp = new Array();
+        var j = 0;
+        for(var i = 0; i < this.length; i++) //遍历当前数组
+        {
+            if (!n[this[i]]) //如果hash表中没有当前项
+            {
+                n[this[i]] = true; //存入hash表
+                temp[j++] = this[i]; //把当前数组的当前项push到临时数组里面
+            }
+        }
+        return temp;
+    }
 	
 	var selectContent=new Array();
 	var iSelOption=0;
@@ -367,23 +382,24 @@ select{
 	    	var selObj=document.getElementById("sel_objects_"+iRowIndex+"_"+j);
 		//alert("j="+j);
 		//alert("selObj.value="+selObj.value);
-		if (selObj.value!=""){
-		    for (var k=0; k<attrParts.length; k++){
-		        var contents=attrParts[k].split(":");
-		        var name=contents[0];
-		        //alert("name="+name);
-		        var attrs=contents[1].split(",");
-		        if (selObj.value==name){
-		    	    for (var z=0; z<attrs.length-1; z++){
-	    	    	        selectContent[iSelOption++]=name+"."+attrs[z];
-		    	        //alert("attrs[z]="+attrs[z]);
-		    	    }
+		    if (selObj.value!=""){
+		        for (var k=0; k<attrParts.length; k++){
+		            var contents=attrParts[k].split(":");
+		            var name=contents[0];
+		            //alert("name="+name);
+		            var attrs=contents[1].split(",");
+		            if (selObj.value==name){
+		        	    for (var z=0; z<attrs.length-1; z++){
+	        	    	        selectContent[iSelOption++]=name+"."+attrs[z];
+		        	                //alert("attrs[z]="+attrs[z]);
+		        	    }
+		            }
 		        }
+		        //alert("ok");
 		    }
-		    //alert("ok");
-		}
 	    }
 	    selectContent=selectContent.sort();
+        selectContent=selectContent.unique2();
 	}
 
 

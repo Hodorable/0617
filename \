@@ -1,0 +1,108 @@
+import sys
+from horizon import messages
+from openstack_dashboard.api import congress as cg_api
+server_contains = [ ('nova', 'servers', ['server_id','name', 'status'], {'id':'server_id'}),
+                    ('keystone', 'users', ['username', 'enabled', 'email'], {'id':'user_id'}), 
+                    ('neutronv2', 'security_groups', ['tenant_security_group_id','tenant_security_group_name'], 
+                        {'id':'tenant_security_group_id', 'name':'tenant_security_group_name'}),
+                    ('keystone', 'tenants', ['tenant_name',], {'id':'tenant_id', 'name':'tenant_name'}), 
+                    ('nova', 'floating_IPs', ['fixed_ip', 'ip_pool'], {}), 
+                    ('glancev2', 'images', ['image_name', 'container_format', 'created_at', 'updated_at', 'disk_format', 'protected', 
+                        'min_ram', 'min_disk', 'checksum', 'size', 'file', 'kernal_id', 'ramdisk_id', 'schema', 'visibility'],
+                        {'id':'image_id', 'name':'image_name'}), 
+                    ('nova', 'flavors', ['vcpus', 'ram', 'disk', 'ephemeral', 'rxtx_factor'], {'id':'flavor_id'}) ]
+server_keys = ('server_id', 'user_id', 'image_id', 'flavor_id', 'tenant_id')
+server_sentense = []
+server_final_list = []
+server_head_list = []
+def create_sentense(request, c, head_col, dname, tname, lst, head_list):
+    sentense = "temp"+"%d" % c
+    #messages.error(request,"sentense %s" % sentense)
+    for idx, ele in enumerate(head_col):   
+        #messages.error(request,head_col)
+        sentense += ("(" + ele) if idx == 0 else  ("," + ele)
+    sentense += ") "
+    head_list.append(sentense)
+    sentense +=  cg_api.RULE_SEPARATOR + " "
+    if c:
+        sentense += head_list[c-1] + ","
+    #messages.error(request,"sentense %s" % sentense)
+    sentense += dname + cg_api.TABLE_SEPARATOR + tname
+    #messages.error(request,"~ sentense %s" % sentense)
+    for idx, ele in enumerate(lst):
+        #messages.error(request,"ele %s" % ele)
+        sentense += ("(" + ele) if idx == 0 else  ("," + ele)
+        #messages.error(request,"sentense %s" % sentense)
+    sentense += ")"
+    f = open('/home/congress/lmy_log','a+')
+    f.write(sentense+"\n")
+    f.close()
+    return sentense
+    
+
+def get_server(request, contains, keys, sentense, final_list, head_list):
+    c = 0
+    head_col = []
+    for i,(dname, tname, lst, mp) in enumerate(contains) :
+      #  if i > 1:
+      #      break
+        try:
+            schema = cg_api.datasource_table_schema_get_by_name(request, dname, tname)
+            messages.error(request,"dname:%s tname:%s c:%d" %(dname,tname,c))
+            if c == 0:
+                for col in schema['columns']:
+                    t = mp.get(col['name'], col['name'])
+                    if t in keys or t in lst: 
+                        #messages.error(request,col['name'])
+                        head_col.append(t)
+                for l in lst:
+                    #messages.error(request,mp.get(l,l))
+                    final_list.append(mp.get(l,l))
+            else:
+                for col in lst:
+                    t = mp.get(col,col)
+                    #messages.error(request,"col %s" % t)
+                    head_col.append(t)
+                    final_list.append(t)
+            lt = []
+            for col in schema['columns']:
+                t = mp.get(col['name'], col['name'])
+                if t in keys or t in lst:
+                    lt.append(t)
+                else:
+                    lt.append("-")
+            msg = create_sentense(request, c, head_col, dname, tname, lt, head_list)
+            sentense.append(msg)
+            messages.error(request, msg)
+            c += 1
+        except Exception as e:
+            msg = 'Uable to get table schema'
+            messages.error(request, msg)
+            if c == 0:
+                return "error!!" 
+
+object_list = [ ('server', 'nova', 'servers'), 
+#             ('port', 'neutronv2', 'ports'),
+#             ('subnet', 'neutronv2', 'subnets'),
+#             ('network', 'neutronv2', 'network'),
+#             ('router', 'neutronv2', 'routers') 
+              ]
+
+active_object = []
+def append_sentense(obj_name):
+    sentense = "{'name':%s," % obj_name
+    sentense += "'contains':%s_contains," % obj_name
+    sentense += "'keys':%s_keys," % obj_name
+    sentense += "'sentense':%s_sentense," % obj_name
+    sentense += "'final_list':%s_final_list," % obj_name
+    sentense += "'head_list':%s_head_list}" %obj_name 
+    return sentense
+def __object__(request):
+    active_object = []
+    for i,(obj_name,dname,tname) in enumerate(object_list):
+        try:
+            schema = cg_api.datasource_table_schema_get_by_name(request, dname, tname)
+            messages.error(request, "active_object_list.append("+append_sentense(obj_name)+")")
+            exec("active_object.append("+append_sentense(obj_name)+")")
+        except Exception as e:
+            messages.error(request, e.message)

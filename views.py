@@ -22,6 +22,8 @@ from horizon import exceptions
 from openstack_dashboard.api import congress
 from openstack_dashboard.dashboards.admin.policy import tabs as policy_tabs
 
+from openstack_dashboard.dashboards.admin.policy import objects as objs
+
 import logging
 import sys,os
 
@@ -166,8 +168,8 @@ def generate_rule(request):
     return response
 
 def show_results(request):
-    get_objects(request)    
-    LOG.error('************ok*********** \n')
+    #get_objects(request)    
+    #LOG.error('************ok*********** \n')
 
     policy_name = "classification"
     table_name = "error"
@@ -177,7 +179,7 @@ def show_results(request):
         #policies = congress.policy_get(request, policy_name)
         #LOG.error('************Policy_GET : %s' % policies)
         policies = congress.policy_rules_list(request, policy_name)
-        LOG.error('************Policy_Rules_list : %s' % policies)
+    #    LOG.error('************Policy_Rules_list : %s' % policies)
 	#id=""
 	for rule in policies:
 	#    rule.set_id_as_name_if_empty()
@@ -210,7 +212,7 @@ def show_results(request):
         #LOG.error('************results: %s' % results)
     except Exception as e:
         msg = ('Unable to get results: %s') % e.message
-        messages.error(request, msg)
+        #messages.error(request, msg)
 
     #data = ""
     #for item in results:
@@ -225,57 +227,41 @@ def show_results(request):
     return response    
 
 def get_objects(request):
+    #objs.get_server(request, objs.server_contains, objs.server_keys, objs.server_sentense,
+    #                objs.server_final_list, objs.server_head_list)
+    objs.__object__(request)
+    objs.object_register(request)
+    objs.create_rule(request)
     try:
-         datasources = congress.datasources_list(request)
-         #LOG.error("-----------datasources_list=%s\n\n" % datasources)
+        policy_name = "classification"
+        policies = congress.policy_rules_list(request, policy_name)
+        LOG.error('************Policy_Rules_list : %s' % policies)
     except Exception as e:
-         msg = ('Unable to get datasources list: %s') % e.message
-         messages.error(request, msg)
-         return []
-
-    objects = []
-    for ds in datasources:
-        ds_id = ds['id']
-        try:
-            ds_tables = congress.datasource_tables_list(request,
-                                                        ds_id)
-        except Exception as e:
-            msg_args = {'ds_id': ds_id, 'error': e.message}
-            msg = ('Unable to get tables list for datasources "%(ds_id)s": '
-                    '%(error)s') % msg_args
-            messages.error(request, msg)
-            return []
-
-        for table in ds_tables:
-	    table.set_value('datasource_id', ds_id)
-            objects.append(table)
-
-    #LOG.error("~~~~~~~~~~~~objects = %s\n" % objects)
+        messages.error(request, e.message)
     data = ""
-    for item in objects:
-	data += item['id'] + ","
-	#LOG.error("!!!!!! objects[id] = %s \n" % item['id'])
+    for i,item in enumerate(objs.active_object):
+	    data += item['name'] + ","
 
     data += "&"
-
-    for obj in objects:
-	try:
-	    schema = congress.datasource_table_schema_get(
-                    request, obj['datasource_id'], obj['id'])    
-	    data += schema['table_id'] + ":"
-	    #LOG.error("---------schema[columns]= %s\n" % schema['columns'])
-	    for it in schema['columns']:
-		data += it['name'] + ","
-	        #LOG.error("---------it[name]= %s\n" % it['name'])
-	    data += ";"
-    	    #LOG.error("**********data = %s \n" % data)
+    for i,item in enumerate(objs.active_object):
+        try:
+            #messages.error(request, "dname: %s table_name: %s\n" % (obj['datasource_id'],obj['id']))
+            data += item['name'] + ":"
+            #LOG.error("---------schema[columns]= %s\n" % schema['columns'])
+            lst = item['final_list']
+            for it in lst:
+                data += it + ","
+                #LOG.error("---------it[name]= %s\n" % it['name'])
+            data += ";"
+                #LOG.error("**********data = %s \n" % data)
         except Exception as e:
-    	    msg = 'Unable to get tables schema'
-    	    message.error(request, msg)
-    	    return []
+            message.error(request, e.message)
+            return []
     context = data
+    LOG.error("\n&&&&&&%s\n&&&&&&" % data)
     response = http.HttpResponse(content_type='text/plain')
     response.write(context)
     response.flush()
     return response    
+
 
