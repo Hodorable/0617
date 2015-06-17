@@ -23,7 +23,6 @@ from openstack_dashboard.api import congress
 from openstack_dashboard.dashboards.admin.policy import tabs as policy_tabs
 
 from openstack_dashboard.dashboards.admin.policy import objects as objs
-
 import logging
 import sys,os
 
@@ -33,119 +32,216 @@ class IndexView(tabs.TabbedTableView):
     tab_group_class = policy_tabs.PolicyOverviewTabs
     template_name = 'admin/policy/index.html'
 
+ACTIVE_OBJECT = []
+OBJECT_INDEX_BY_NAME = {}
+
 #objects means the Objects column of UI
-def create_sentence_from_objects(name):
-    sentence = ""
+def create_sentence_from_objects(request, object_name, onymous_attr, attr_mp):
     #set the attributes fixed temporary,later we will get them from database
-    if name == "servers":
-	sentence += "nova:servers("
-        sentence += "servers_id" + ", servers_name"
-	sentence += ", servers_hID" + ", servers_status" + ", servers_tenant_id"
-	sentence += ", servers_user_id" + ", servers_image" + ", servers_flavor"
-	sentence += "),"
-    elif name == "networks":
-    	sentence += "neutronv2:networks("
-    	sentence += "net_id" + ", net_tenant_id"
-    	sentence += ", net_name" + ", net_status"
-    	sentence += ", net_admin_state_up" + ", net_shared"
-    	sentence += "),"
+    global OBJECT_INDEX_BY_NAME
+    sentence = object_name + "("
+
+    obj = OBJECT_INDEX_BY_NAME[object_name]
+    f = False
+    cnt = 0
+    s = object_name[0] + object_name[1]
+    for i,attr in enumerate(obj['final_list']):
+        if not attr:
+            continue
+        if f:
+            sentence += ","
+        else:
+            f = True
+        attr = object_name + "_" + attr
+        if attr in onymous_attr:
+            sentence += attr_mp.get(attr,attr)
+        else:
+            #sentence += "_" 
+            sentence += s + "%d" % cnt
+            cnt += 1
+    sentence += ")"
+    #messages.error(request, " obj_sentence : " + sentence)
     return sentence
 
+
 #conditions means the Violation Conditions column of UI
-def create_sentence_from_conditions(lenConditions, condition, conditionIndex):
+condition_type = { "equal(==)":"equal",
+                   "greater than(>)":"gt",
+                   "greater or equal(>=)":"gteq",
+                   "less than(<)":"lt",
+                   "less or equal(<=)":"lteq" }
+def create_sentence_from_conditions(request, condition, onymous_attr, attr_mp):
+
+#    messages.error(request, condition)
     content = condition.split(":")
+#    for i in content:
+#        messages.error(request, "content:" + i)
     conName = content[0].lower()
-    if conName == "equal(==)":
-        conName = "equal"
-    elif conName == "greater than(>)":
-        conName = "gt"
-    elif conName == "greater or equal(>=)":
-        conName = "gteq"
-    elif conName == "less than(<)":
-        conName = "lt"
-    elif conName == "less or equal(<=)":
-        conName = "lteq"
+    conName = condition_type.get(conName, conName)
     args = content[1].split(",")
-    sentence = ""
-    sentence += conName + "("
-    for k in range(len(args)-1):
-        if args[k].find("servers.") >= 0:
-            args[k] = args[k].replace("servers.", "servers_")
-        elif args[k].find("networks.") >= 0:
-            args[k] = args[k].replace("networks.", "net_")
-    
-        if k == 0:
-            sentence += args[k]
+
+    sentence = conName + "("
+    f = False
+    for i,attr in enumerate(args):
+        if not attr:
+            continue
+#        else:
+#            messages.error(request, "args: " + attr)
+        if f:
+            sentence += ","
         else:
-            sentence += ", " + args[k]
-    if (lenConditions-1) == 1:
-        sentence += ")"
-    elif conditionIndex != (lenConditions-2):
-        sentence += "),"
-    else:
-        sentence += ")"
+            f = True
+        attr = attr.replace('.','_')
+        if attr not in onymous_attr:
+            onymous_attr.append(attr)
+        attr = attr_mp.get(attr, attr)
+        sentence += attr 
+    sentence += ")"
     return sentence
 
 #data means the Data column of UI
-def create_sentence_from_data(dataMesg, policy_table_name):
+def create_sentence_from_data(request, dataMesg, policy_table_name, onymous_attr, attr_mp):
+
     title = dataMesg.split(",")
     sentence = policy_table_name + "("
-    #sentence = "error1("
-    for i in range((len(title)-1)):
-        title[i] = title[i].lower()
-        title[i] = title[i].replace("servers.", "servers_")
-        title[i] = title[i].replace("networks.", "net_")
-        sentence += title[i]
-        if i != (len(title)-2):
+#    messages.error(request, "data_sentence: " + sentence)
+    f = False
+    for i,attr in enumerate(title):
+        if not attr:
+            continue
+        if f:
             sentence += ","
+        else:
+            f = True
+        attr = attr.replace('.', '_')
+        if attr not in onymous_attr:
+            onymous_attr.append(attr)
+        attr = attr_mp.get(attr,attr)
+        sentence += attr
     sentence += ")" + str(congress.RULE_SEPARATOR)
+#    messages.error(request, "~data_sentence: " + sentence)
+
     return sentence
 
+def get_object_relation(request ,msg ,objects, onymous_attr, attr_mp):
+
+    global ACTIVE_OBJECT
+    global OBJECT_INDEX_BY_NAME
+    #messages.error(request, "here")
+#    for i in ACTIVE_OBJECT:
+#        messages.error(request, "active_object: "+ i['name'])
+#    for i in OBJECT_INDEX_BY_NAME:
+#        messages.error(request, i)
+    objects = msg.split(",")
+    for i,name in enumerate(objects):
+        if not name:
+            continue
+#        messages.error(request, "%d obj_name: %s" % (i,name))
+        obj = OBJECT_INDEX_BY_NAME[name]
+        #obj = objs.get_object_by_name(request, name)
+        #for k in objs.object_index_by_name:
+        #    messages.error(request, "index: "+ k)
+        #obj = objs.object_index_by_name[name]
+#        messages.error(request, "get_obj:" + obj['name'])
+        for o,a1,a2 in obj['relations']:
+            if o in objects:
+                if a1:
+                    t1 = "%s_%s" % (name,a1[0])
+                    t2 = "%s_%s" % (o,a1[1])
+#                    messages.error(request,"t1 t2: " + t1 + " " + t2)
+                    if t1 not in onymous_attr:
+                        onymous_attr.append(t1)
+                    if t2 not in onymous_attr:
+                        onymous_attr.append(t2)
+                    if attr_mp.has_key(t1) == False:
+                        attr_mp[t1] = attr_mp.get(t2,t1)
+                    if attr_mp.has_key(t2) == False:
+                        attr_mp[t2] = attr_mp.get(t1,t2)
+                if a2:
+                    for k in a2:
+                        if k not in objects:
+                            #messages.error(request,"k: " + k)
+                            objects.append(k)
+                            #for x in objects:
+                            #    messages.error(request, "x: "+x)
+#    messages.error(request, "~print_objects: ")
+#    for i in objects:
+#        if i:
+#            messages.error(request, "~obj: " + i)
+    return objects
 
 #according the message sended by UI to create datalog
 def generate_rule(request):
     #get user's input message on UI
     rules_string = request.GET.get('msg')
     response = http.HttpResponse(content_type='text/plain')
+    
+#    messages.error(request, rules_string)
 
     rules_list = rules_string.split("@@")
+    global ACTIVE_OBJECT
+    global OBJECT_INDEX_BY_NAME
+    if not ACTIVE_OBJECT:
+        messages.error(request, "g,active_obj = NULL")
+        ACTIVE_OBJECT = objs.__object__(request)
+    if not OBJECT_INDEX_BY_NAME:
+        messages.error(request, "g,index_obj = NULL")
+        OBJECT_INEDEX_BY_NAME = objs.object_register(request)
+#    messages.error(request, "ghere")
+#    for i in objs.active_object:
+#        messages.error(request, "active_object: "+ i['name'])
+#    for i in OBJECT_INDEX_BY_NAME:
+#        messages.error(request, i)
     rule = ""
     for mesg in rules_list:
         if mesg != "":
-            #create datalog
+            # generate datalog sentence
             rule = ""
-	    rule_string = mesg
-            mesg=mesg.split("&")
-	
-	    policy_table_name = "error"
-	    if mesg[3] != "":
-	        policy_table_name = mesg[3]
-	    LOG.error("--------policy_table_name=%s" % policy_table_name)
-            rule += create_sentence_from_data(mesg[2], policy_table_name)
-
-            objects = mesg[0].split(",")
-            iAddPorts = 0
-            for i in range(len(objects)-1):
-                if objects[i] == "servers":
-                    rule += create_sentence_from_objects("servers")
-                    iAddPorts = iAddPorts + 1
-                elif objects[i] == "networks":
-                    rule += create_sentence_from_objects("networks")
-                    iAddPorts = iAddPorts + 1
-            if iAddPorts == 2:
-                rule += "neutronv2:ports(a, tenant_id, c, network_id, e, f, g, device_id, i),"
-                rule=rule.replace("servers_id", "device_id")
-                rule=rule.replace("net_id", "network_id")
+            rule_string = mesg
+            mesg = mesg.split("&")
+	       
+            # objects relations 
+            attr_mp = {}
+            objects = [] 
+            onymous_attr = []
+            if mesg[0] != "":
+                objects = get_object_relation(request, mesg[0], objects, onymous_attr, attr_mp)
+#            messages.error(request, "print_objects: ")
+#            for i in objects:
+#                if i:
+#                    messages.error(request, "obj: " + i)
+            # generate datalog head
+            policy_table_name = "error"
+            if mesg[3] != "None":
+                policy_table_name = mesg[3]
+#            messages.error(request, "policy_table_name = %s, %s" % (policy_table_name, mesg[3]))
+            rule += create_sentence_from_data(request, mesg[2], policy_table_name, onymous_attr, attr_mp)
 
 
             conditions = mesg[1].split("|")
-	    conLength = len(conditions)
-            for j in range(len(conditions)-1):
-                condition = conditions[j]
-		rule += create_sentence_from_conditions(conLength, condition, j)
+            rule_t = ""
 
+            for i,con in enumerate(conditions):
+                if con:
+                    rule_t += ","
+                    #messages.error(request, "conditions: " + con)
+                    rule_t += create_sentence_from_conditions(request, con, onymous_attr, attr_mp)
+            
+            #messages.error(request, "rult_t : "+ rule_t)    
+            
+            f = True
+            for i,obj in enumerate(objects):
+                if obj:
+                    if f:
+                        f = False
+                    else:
+                        rule += ","
+                    #messages.error(request, "object : " + obj)
+                    rule += create_sentence_from_objects(request, obj, onymous_attr, attr_mp)
 
-
+            rule += rule_t
+    
+            #messages.error(request, rule)
 
             comment = ""
             policy_name = "classification"
@@ -168,6 +264,7 @@ def generate_rule(request):
     return response
 
 def show_results(request):
+
     #get_objects(request)    
     #LOG.error('************ok*********** \n')
 
@@ -189,20 +286,20 @@ def show_results(request):
 	#    LOG.error('<<<<<<<<<<<<<<<\n\n\n')
 	    #id = rule['id']
 	    rule_string = rule['name']
-	    LOG.error("++++++++++rule_string=%s\n" % rule_string)
-	    contents = rule_string.split("&")
-	    if contents[3] != "":
-	        table_name = contents[3]
-            LOG.error('************table_name: %s' % table_name)
-            results = ""
-            results = congress.policy_rows_list(request, policy_name, table_name)
-            LOG.error('************results: %s' % results)
-            data += rule_string + "&"
-            for item in results:
-                data += str(item['data'])+","
-                LOG.error('************data: %s' % data)
-	    data += "&" + rule['rule']
-	    data += "@@"
+	    if rule_string != "":
+	        LOG.error("++++++++++rule_string=%s\n" % rule_string)
+	        contents = rule_string.split("&")
+	        if contents[3] != "None":
+	            table_name = contents[3]
+                LOG.error('************table_name: %s' % table_name)
+                results = ""
+                results = congress.policy_rows_list(request, policy_name, table_name)
+                LOG.error('************results: %s' % results)
+                data += rule_string + "&"
+                for item in results:
+                    data += str(item['data'])+","
+	        data += "&" + rule['rule']
+	        data += "@@"
 	    
 	#congress.policy_rule_delete(request, policy_name, id)
 	#LOG.error('id = %sn\n\n' % id)
@@ -221,16 +318,21 @@ def show_results(request):
     #data = data.replace("[u'", "")
     #data = data.replace("']", "")
     context = data
+    LOG.error('************data: %s' % data)
     response = http.HttpResponse(content_type='text/plain')
     response.write(context)
     response.flush()
     return response    
 
 def get_objects(request):
-    #objs.get_server(request, objs.server_contains, objs.server_keys, objs.server_sentense,
-    #                objs.server_final_list, objs.server_head_list)
-    objs.__object__(request)
-    objs.object_register(request)
+
+    global ACTIVE_OBJECT
+    global OBJECT_INDEX_BY_NAME
+
+    ACTIVE_OBJECT = objs.__object__(request)
+    OBJECT_INDEX_BY_NAME = objs.object_register(request)
+#    for i in OBJECT_INDEX_BY_NAME:
+#        messages.error(request, "get_obj " + i)
     objs.create_rule(request)
     try:
         policy_name = "classification"
@@ -263,5 +365,4 @@ def get_objects(request):
     response.write(context)
     response.flush()
     return response    
-
 

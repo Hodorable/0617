@@ -23,4 +23,6 @@ urlpatterns = patterns('openstack_dashboard.dashboards.admin.policy.views',
     url(r'^show_results$', views.show_results, name='show_results'),
     #url(r'^show_results$', views.get_objects, name='get_objects'),
     url(r'^get_objects_and_attr$', views.get_objects, name='get_objects')
+    #url(r'^add_ui$', db_op.add_ui, name='add_ui'),
+    #url(r'^del_ui$', db_op.del_ui, name='del_ui'),
 )  

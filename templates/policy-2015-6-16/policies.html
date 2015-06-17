@@ -111,7 +111,7 @@ select{
 		+'<select id="sel_objects_'+numRowIndex+'_1" class="box2" onchange="changeConditionsSelValue('+numRowIndex+')">'
 		+'<option></option>'
 		+'</select>'
-		+' <input type="button" id="btnAddObjects_'+numRowIndex+'_1" onclick="addSelObjects('+(numRowIndex)+')" value="Add"/>'
+		+' <input type="button" id="btnAddObjects_'+numRowIndex+'_1" onclick="addSelObjects('+(numRowIndex)+')" value="add"/>'
 		+'<input type="button" id="selObjNum_'+numRowIndex+'" value="1" style="display:none"/>'
 		+'</div>'
 		+'</td></tr>';
@@ -293,7 +293,7 @@ select{
 		newSelDiv.innerHTML='<select id="sel_objects_'+iRowIndex+'_'+hidSelObj.value+'" class="box2" onchange="changeConditionsSelValue('+iRowIndex+')">'
 		+'<option></option>'
 		+'</select>'
-		+' <input type="button" id="btnAddObjects_'+iRowIndex+'_'+hidSelObj.value+'" onclick="addSelObjects('+iRowIndex+')" value="Add"/>'
+		+' <input type="button" id="btnAddObjects_'+iRowIndex+'_'+hidSelObj.value+'" onclick="addSelObjects('+iRowIndex+')" value="add"/>'
 		divInnerDiv.appendChild(newSelDiv);
 		addObjectsContent("sel_objects_"+iRowIndex+"_"+hidSelObj.value);
 	}
@@ -323,9 +323,8 @@ select{
 		return false;
 	}
 	
-    Array.prototype.unique2=function()
+    Array.prototype.unique2 = function()
     {
-        var n={};
         var temp = new Array();
         var j = 0;
         for(var i = 0; i < this.length; i++) //遍历当前数组
@@ -764,7 +763,7 @@ select{
 			</thead>
 			
 			<tr>
-				<td>
+				<td class="multi_select_column">
 					<input type="checkbox" id="cbox_0"></input>
 				</td>
 
@@ -777,7 +776,7 @@ select{
 						<select id="sel_objects_0_1" class="box2" onchange="changeConditionsSelValue(0)">
 							<option></option>
 						</select>
-						<input type="button" id="btnAddObjects_0_1" onclick="addSelObjects(0)" value="Add"/>
+						<input type="button" id="btnAddObjects_0_1" onclick="addSelObjects(0)" value="add"/>
 						<input type="button" id="selObjNum_0" value="1" style="display:none"/>
 					</div>
 				</td>
@@ -823,7 +822,7 @@ select{
 <div id="div_button">
     <input type="button" id="btnAdd" onclick="AddRuleRow()" value="Add"/>
     <input type="button" id="btnDelete" onclick="DeleteRuleRow()" value="Delete"/>
-    <input type="button" id="btnSubmit" onclick="generateRule()" value="Submit"/>
+    <input type="button" id="btnSubmit" onclick="generateRule()" value="submit"/>
 </div>
  
 	

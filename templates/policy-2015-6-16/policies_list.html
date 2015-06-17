@@ -49,9 +49,6 @@
 		
 		    var result = parts[5]
 		    var datalog = parts[6]
-		    //datalog = datalog.replace("\:-", "\:-\n");
-		    //var replaceStr="),";
-		    //datalog = datalog.replace(new RegExp(replaceStr,'gm'), "),\n");
 
 
 		    var data0='<tr><td>'+rule+'</td></tr>';
@@ -75,7 +72,7 @@
 	xmlhttp.send();
     }
 
-    window.onload = function(){ setInterval(getResults, 5000); }
+   window.onload = function(){ setInterval(getResults, 5000); }
 </script>
 
 
@@ -85,4 +82,11 @@
         <th width="50%">Datalog</th>
         <th width="10%">Results</th>
     </thead>
+   <!-- {% for policy in polict_list %}
+    <tr>
+      <td>{{policy.name}}</td>
+      <td></td>
+      <td></td>
+    </tr>
+     {% endfor %}-->
 </table>

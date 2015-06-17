@@ -15,16 +15,9 @@
 	xmlhttp.onreadystatechange=function(){
 	    if (xmlhttp.readyState==4 && xmlhttp.status==200){       			
 	        var results=xmlhttp.responseText;
-		//alert("results="+results);
+		alert("results="+results);
 		var table=document.getElementById("table_results");
-
-        	var rows=table.rows.length;
-        	for (var i=1; i<rows; i++){
-        	    table.deleteRow(1); 
-        	}
-
-		//var rules=rulesInfo.split("@@");
-		var rules=results.split("@@");
+		var rules=rulesInfo.split("@@");
 		for (var i=0; i<rules.length-1; i++){
 		    var parts=rules[i].split("&");
 		    var rule="";
@@ -46,17 +39,10 @@
 
 		    rule+="Data:<br>";
 		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[2]+"<br>";
-		
-		    var result = parts[5]
-		    var datalog = parts[6]
-		    //datalog = datalog.replace("\:-", "\:-\n");
-		    //var replaceStr="),";
-		    //datalog = datalog.replace(new RegExp(replaceStr,'gm'), "),\n");
 
 
 		    var data0='<tr><td>'+rule+'</td></tr>';
-		    var data1='<tr><td>'+datalog+'</td></tr>';
-		    var data2='<tr><td>'+result+'</td></tr>';
+		    var data1='<tr><td>'+results+'</td></tr>';
 		    var row=table.insertRow(table.rows.length);
 		    var col;
 
@@ -65,24 +51,18 @@
 
 		    col=row.insertCell(1);
 		    col.innerHTML = data1;
-
-		    col=row.insertCell(2);
-		    col.innerHTML = data2;
 		}
 	    }
         }
 	xmlhttp.open("GET","show_results",true);
 	xmlhttp.send();
     }
-
-    window.onload = function(){ setInterval(getResults, 5000); }
 </script>
 
 
 <table width="100%" id="table_results"  border="1" class="t1">
     <thead>
-        <th width="40%">Rule</th>
-        <th width="50%">Datalog</th>
-        <th width="10%">Results</th>
+        <th width="50%">Rule</th>
+        <th width="30%">Results</th>
     </thead>
 </table>
