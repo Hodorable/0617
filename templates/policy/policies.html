@@ -410,7 +410,7 @@ select{
 	    var hidSelObj=document.getElementById("selObjNum_"+iRowIndex);
 	    for (var j=1; j<=(hidSelObj.value); j++){
 	    	var selObj=document.getElementById("sel_objects_"+iRowIndex+"_"+j);
-		alert("selObj.value="+selObj.value);
+		//alert("selObj.value="+selObj.value);
 	    	if (selObj.value=="servers" && !selectContent.hasItem("Servers.id")){
 	    		selectContent[iSelOption++]="Servers.id";
 	    		selectContent[iSelOption++]="Servers.name";
@@ -730,12 +730,13 @@ select{
 		    if (actionFlag==false)
 		    	content+="None,";
 
-		    alert("content:"+content);
+		    //alert("content:"+content);
             }
 	    content+=RULE_SEPARATOR;
         }
+        //alert("last:"+content);
         $.get("generate_rule", {msg:content}, function(data){
-            alert("Returned data: "+data);
+            //alert("Returned data: "+data);
         });
 	//getResults(content);
 

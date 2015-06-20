@@ -28,32 +28,35 @@
 		for (var i=0; i<rules.length-1; i++){
 		    var parts=rules[i].split("&");
 		    var rule="";
+            var rule_="";
 			
 		    rule="Name:<br>";
-		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[3]+"<br>";
+		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[0]+"<br>";
 
 		    rule+="Objects:<br>";
-		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[0]+"<br>";
+		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[1]+"<br>";
 
 		    var con=parts[1];
 		    con=con.substr(0, con.length-1);
 		    con=con.replace(/\|/g, "<br>&nbsp;&nbsp;&nbsp;&nbsp;");
 		    rule+="Conditions:<br>";
-		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+con+"<br>";
+		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[2]+"<br>";
 
 		    rule+="Actions:<br>";
-		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[4]+"<br>";
+		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[3]+"<br>";
 
 		    rule+="Data:<br>";
-		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[2]+"<br>";
+		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[4]+"<br>";
 		
-		    var result = parts[5]
-		    var datalog = parts[6]
+		   var result = parts[6]
+            //var result="result"
+		    var datalog = parts[5]
+            //var datalog="datalog"
 		    //datalog = datalog.replace("\:-", "\:-\n");
 		    //var replaceStr="),";
 		    //datalog = datalog.replace(new RegExp(replaceStr,'gm'), "),\n");
 
-
+            rule_="Name:"+parts[0]+"<br/>Objects:"+parts[1]+"<br/>Conditions:"+parts[2]+"<br/>Actions:"+parts[3]+"<br/>Data:"+parts[4];
 		    var data0='<tr><td>'+rule+'</td></tr>';
 		    var data1='<tr><td>'+datalog+'</td></tr>';
 		    var data2='<tr><td>'+result+'</td></tr>';

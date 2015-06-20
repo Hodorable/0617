@@ -30,9 +30,6 @@ server_contains = [ ('nova', 'servers', ['server_id', 'name', 'status'], {'id':'
 server_keys = ('server_id', 'user_id', 'image_id', 'flavor_id', 'tenant_id')
 server_relations = [ ('port', ('server_id', 'device_id'), ()), 
                      ('network', (), ('port', )),]
-server_sentence = []
-server_final_list = []
-server_head_list = []
 
 port_contains = [ ('neutronv2', 'ports', ['port_id', 'name', 'mac_address', 'admin_state_up', 'status', 'device_id', 'network_id'],
                     {'id':'port_id'}),
@@ -48,9 +45,6 @@ port_contains = [ ('neutronv2', 'ports', ['port_id', 'name', 'mac_address', 'adm
 port_keys = ('port_id', 'tenant_id')
 port_relations = [ ('server', ('device_id', 'server_id'), ()),
                    ('network', ('network_id', 'network_id'), ()), ]
-port_sentence = []
-port_final_list = []
-port_head_list = []
 
 network_contains = [ ('neutronv2', 'networks', ['network_id', 'name', 'status', 'admin_state_up', 'shared'],
                     {'id':'network_id'}),
@@ -60,9 +54,6 @@ network_contains = [ ('neutronv2', 'networks', ['network_id', 'name', 'status', 
 network_keys = ('network_id','tenant_id')
 network_relations = [ ('port', ('network_id', 'network_id'), ()),
                       ('server', (), ('port', )) ]
-network_sentence = []
-network_final_list = []
-network_head_list = []
 
 subnet_contains = [ ('neutronv2', 'subnets', ['subnet_id', 'name', 'ip_version', 'cidr', 'gateway_ip', 'enable_dhcp',
                     'ipv6_ra_mode'], {'id':'subnet_id'}),
@@ -75,9 +66,6 @@ subnet_contains = [ ('neutronv2', 'subnets', ['subnet_id', 'name', 'ip_version',
                     ('neutronv2', 'host_routes', ['destination', 'nexthop'], {}) ]
 subnet_keys = ('subnet_id', 'tenant_id')
 subnet_relations = [('port', ('subnet_id', 'port_id'), ()),]
-subnet_sentence = []
-subnet_final_list = []
-subnet_head_list = []
 
 router_contains = [('neutronv2', 'routers', ['router_id', 'name', 'status', 'admin_state_up', 'distributed'], {'id':'router_id'}),
                    ('keystone', 'tenants', ['tenant_name',], {'id':'tenant_id', 'name':'tenant_name'}),
@@ -89,83 +77,6 @@ router_contains = [('neutronv2', 'routers', ['router_id', 'name', 'status', 'adm
                    ('neutronv2', 'subnets', ['external_subnet_name',], {'id':'subnet_id','name':'external_subnet_name'}) ]
 router_keys = ('router_id', 'tenant_id', 'network_id', 'subnet_id')
 router_relations = [('port', ('router_id', 'port_id'), ()),]
-router_sentence = []
-router_final_list = []
-router_head_list = []
-
-def create_sentence(request, obj_name, c, head_col, dname, tname, lst, head_list):
-    sentence = obj_name+"%d" % c
-    #messages.error(request,"sentence %s" % sentence)
-    for idx, ele in enumerate(head_col):   
-        #messages.error(request,head_col)
-        sentence += ("(" + ele) if idx == 0 else  ("," + ele)
-    sentence += ") "
-    head_list.append(sentence)
-    sentence +=  cg_api.RULE_SEPARATOR + " "
-    if c:
-        sentence += head_list[c-1] + ","
-    #messages.error(request,"sentence %s" % sentence)
-    sentence += dname + cg_api.TABLE_SEPARATOR + tname
-    #messages.error(request,"~ sentence %s" % sentence)
-    for idx, ele in enumerate(lst):
-        #messages.error(request,"ele %s" % ele)
-        sentence += ("(" + ele) if idx == 0 else  ("," + ele)
-        #messages.error(request,"sentence %s" % sentence)
-    sentence += ")"
-    LOG.error(sentence)
-    return sentence
-    
-
-def get_object(request, obj_name, contains, keys, sentence, final_list, head_list):
-    c = 0
-    head_col = []
-    for i,(dname, tname, lst, mp) in enumerate(contains) :
-        try:
-            schema = cg_api.datasource_table_schema_get_by_name(request, dname, tname)
-            #messages.error(request,"dname:%s tname:%s c:%d" %(dname,tname,c))
-            if c == 0:
-                for col in schema['columns']:
-                    t = mp.get(col['name'], col['name'])
-                    if t in keys or t in lst: 
-                        #messages.error(request,col['name'])
-                        head_col.append(t)
-                for l in lst:
-                    #messages.error(request,mp.get(l,l))
-                    final_list.append(mp.get(l,l))
-            else:
-                for col in lst:
-                    t = mp.get(col,col)
-                    #messages.error(request,"col %s" % t)
-                    head_col.append(t)
-                    final_list.append(t)
-            lt = []
-            cnt = 0
-            s = obj_name[0] + obj_name[1]
-            for col in schema['columns']:
-                t = mp.get(col['name'], col['name'])
-                if t in keys or t in lst:
-                    lt.append(t)
-                else:
-                    #lt.append("_")
-                    lt.append(s + "%d" % cnt)
-                    cnt += 1
-            sen = create_sentence(request, obj_name, c, head_col, dname, tname, lt, head_list)
-            sentence.append(sen)
-            #messages.error(request, msg)
-            c += 1
-        except Exception as e:
-            messages.error(request, e.message)
-            if c == 0:
-                return "error!!" 
-    sen = obj_name
-    for idx, ele in enumerate(final_list):   
-        #messages.error(request,"final_list: "+ ele)
-        sen += ("(" + ele) if idx == 0 else  ("," + ele)
-    sen += ") "+ cg_api.RULE_SEPARATOR + " "
-    if c:
-        sen += head_list[c-1]
-    sentence.append(sen)
-    return sen
 
 object_list = [ 
              ('server', 'nova', 'servers'), 
@@ -174,6 +85,44 @@ object_list = [
              ('network', 'neutronv2', 'networks'),
              ('router', 'neutronv2', 'routers'),
               ]
+    
+
+def get_object(request, obj_name, contains, keys, final_list):
+
+    # generate head
+    sentence = obj_name
+    for i, attr in enumerate(final_list):
+        sentence += "(" if i == 0 else ","
+        sentence += attr
+    sentence +=  ") " + cg_api.RULE_SEPARATOR + " "
+
+    c = 0
+    f = True
+    for i,(dname, tname, lst, mp) in enumerate(contains) :
+        try:
+            schema = cg_api.datasource_table_schema_get_by_name(request, dname, tname)
+            sen = dname + cg_api.TABLE_SEPARATOR + tname
+            ignore = True
+            for i,col in enumerate(schema['columns']):
+                sen += "(" if i == 0 else ","
+                t = mp.get(col['name'], col['name'])
+                if t in final_list or t in keys: 
+                    sen += t
+                    if t in final_list:
+                        ignore = False
+                else:
+                    sen += "v%d" % c
+                    c += 1
+            if not i or not ignore:
+                if not f:
+                    sentence += ","
+                f = False
+                sentence += sen + ")"
+        except Exception as e:
+            messages.error(request, e.message)
+
+    return sentence
+
 
 
 def append_sentence(obj_name):
@@ -186,81 +135,59 @@ def append_sentence(obj_name):
     sentence += "'head_list':%s_head_list}" %obj_name 
     return sentence
 def __object__(request):
-    global active_object
+
     active_object = []
-    for i,(obj_name,dname,tname) in enumerate(object_list):
+    LOG.error("-------__object__ is called -------")
+
+    for i,(obj_name, dname, tname) in enumerate(object_list):
         try:
+            # check object main table in datasource
             schema = cg_api.datasource_table_schema_get_by_name(request, dname, tname)
-            #messages.error(request, "active_list.append("+append_sentence(obj_name)+")")
-            exec("active_object.append("+append_sentence(obj_name)+")")
+            # if get main table success
+            # db_
+            exec("contains = %s_contains" % obj_name)
+            attr = []
+            obj_struct = [obj_name, attr]
+            for i,(dname, tname, lst, mp) in enumerate(contains) :
+                try:
+                    schema = cg_api.datasource_table_schema_get_by_name(request, dname, tname)
+                    # if get table success
+                    for i, t in enumerate(lst):
+                        attr.append(t)
+                except Exception as e:
+                    LOG.error(e.message)            
+            # register
+            active_object.append(obj_struct)    
         except Exception as e:
-            messages.error(request, e.message)
-#    for i,obj in enumerate(active_object):
-#        try:
-#            name = obj['name']
-#            object_index_by_name[name] = obj
-#            relations = object_index_by_name[name]['relations']
-#            for i in relations:
-#                for j in i:
-#                    messages.error(request,j)
+            LOG.error("__object__ error :%s" % e.message)
+
+
     return active_object
 
-def object_register(request):
+def object_register(request, object_name, final_list):
 
-    global active_object
-    global object_index_by_name
-    object_index_by_name = {}
-    for i,obj in enumerate(active_object):
-        try:
-            name = obj['name']
-            #messages.error(request,name)
-            contains = obj['contains']
-            keys = obj['keys']
-            sentence = obj['sentence']
-            final_list = obj['final_list']
-            head_list = obj['head_list']
+    LOG.error("------- object_register is called -------")
+    sentence = ""
+    # db_
+    exec("contains = %s_contains" % object_name)
+    exec("keys = %s_keys" % object_name)
+    sentence = get_object(request, object_name, contains, keys, final_list)
+    return sentence
 
-            object_index_by_name[name] = obj            
-#            relations = obj['relations']
-#            for i in relations:
-#                for j in i:
-#                    continue
-#                    messages.error(request,j)
-            get_object(request, name, contains, keys, sentence, final_list, head_list)
-        except Exception as e:
-            messages.error(request, e.message)
-#    messages.error(request, "balabala")
-#    for k in object_index_by_name:
-#        messages.error(request,"index_key: "+k)
-    messages.error(request, "object register success")
-    return object_index_by_name
+def create_rule(request, sentence):
 
-def create_rule(request):
-    global active_object
-    for i,obj in enumerate(active_object):
-        sentence = obj['sentence']
-
-        for j,sen in enumerate(sentence):
-            #messages.error(request, "here %d" % j)
-            try:
-                #messages.error(request, sen)
-                LOG.error("~~~~~~~~~------------------datalog:  %s\n~~~~~~~~~" % sen)
-                params = {
-                    'name': "",
-                    'comment': "",
-                    'rule': sen,
-                }
-                rule = cg_api.policy_rule_create(request, "classification",
-                                                   body=params)
-                LOG.error("--------------after-----------------\n")
-            except Exception as e:
-                messages.error(request, e.message)
+    try:
+        LOG.error("------------------ create rule datalog:  %s\n-------------------" % sentence)
+        params = {
+            'name': "",
+            'comment': "",
+            'rule': sentence,
+        }
+        rule = cg_api.policy_rule_create(request, "classification",
+                                           body=params)
+        LOG.error("--------------after-----------------\n")
+    except Exception as e:
+        messages.error(request, e.message)
 
 def get_object_by_name(request, object_name):
-    global active_object
-    global object_index_by_name
-#    for k in active_object:
-#        messages.error(request,"active_obj_name: " + k['name'])
-#    messages.error(request, "hehe~~~")
-    return object_index_by_name[object_name]
-#        messages.error(request, "Unable to get object by name: %s" % object_name)                
+    return 
