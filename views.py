@@ -39,7 +39,6 @@ def generate_rule(request):
     #get user's input message on UI
     rules_string = request.GET.get('msg')
     response = http.HttpResponse(content_type='text/plain')
-#    messages.error(request, rules_string)
 
     rules_list = rules_string.split("@@")
 
@@ -60,7 +59,7 @@ def generate_rule(request):
         policy = PolicyUI_Model.PolicyUI_Model()
         policy.PolicyUI_Add(mesg[3], mesg[0], mesg[1], mesg[4], mesg[2], datalog, result)
    
-    response.write()
+    response.write("")
     response.flush()                                                    
     return response
 
@@ -71,15 +70,13 @@ def show_results(request):
     results = ""
     datas=""
     try:
-        LOG.error('************Policy datas start' )
         policy=PolicyUI_Model.PolicyUI_Model() 
         obj=policy.PolicyUI_gets()
         for o in obj:
             datas+=o.name+"&"+o.objects+"&"+o.vi_condition+"&"+o.actions+"&"+o.data+"&"+o.datalog+"&"+o.result+"@@"
-        LOG.error("!!--------------------------data:=%s" % datas)
     except Exception as e:
         msg = ('Unable to get results: %s') % e.message
-        messages.error(request, msg)
+#        messages.error(request, msg)
 
     response = http.HttpResponse(content_type='text/plain')
     response.write(datas)
@@ -93,7 +90,6 @@ def get_objects(request):
     try:
         policy_name = "classification"
         policies = congress.policy_rules_list(request, policy_name)
-        LOG.error('************Policy_Rules_list : %s' % policies)
     except Exception as e:
         messages.error(request, e.message)
 
@@ -111,7 +107,6 @@ def get_objects(request):
 
     data = head + "&" + body
 
-    LOG.error("---------------------------------\n%s\n----------------------------------" % data)
     response = http.HttpResponse(content_type='text/plain')
     response.write(data)
     response.flush()

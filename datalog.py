@@ -16,6 +16,7 @@ from horizon import messages
 from openstack_dashboard.api import congress
 
 import objects as objs
+import db_object as db
 import logging
 import sys,os
 
@@ -37,7 +38,6 @@ def create_sentence_from_objects(object_name, final_list,onymous_attr, attr_mp):
         attr = object_name + "_" + attr
         sentence += attr_mp.get(attr, attr) 
     sentence += ")"
-    LOG.error("==== create_sentence_from_objects %s  ====" % (sentence))
     return sentence
 
 def create_sentence_from_conditions(condition, onymous_attr, attr_mp):
@@ -60,7 +60,6 @@ def create_sentence_from_conditions(condition, onymous_attr, attr_mp):
         attr = attr_mp.get(attr, attr)
         sentence += attr 
     sentence += ")"
-    LOG.error("==== create_sentence_from_conditions %s  ====" % (sentence))
     return sentence
 
 #data means the Data column of UI
@@ -80,7 +79,6 @@ def create_sentence_from_data(content, policy_table_name, onymous_attr, attr_mp)
         attr = attr_mp.get(attr,attr)
         sentence += attr
     sentence += ") " + str(congress.RULE_SEPARATOR) + " "
-    LOG.error("==== create_sentence_from_data %s  ====" % (sentence))
     return sentence
 
 
@@ -91,8 +89,7 @@ def get_object_relation(content, onymous_attr, attr_mp):
     objects = list(set(objects))
 
     for i,name in enumerate(objects):
-        # db
-        exec("relations = objs.%s_relations" % name)
+        exec("relations = db.%s_relations" % name)
 
         for o,a1,a2 in relations:
             if o in objects:
@@ -137,6 +134,10 @@ def monitor_datalog(request, content):
             if con:
                 rule_t += "," + create_sentence_from_conditions(con, onymous_attr, attr_mp)
 
+    LOG.error("---------------------------")
+    for i in onymous_attr:
+        LOG.error("attr : %s" % i)
+    LOG.error("---------------------------")
     # generate subtarget part
     for i, obj_name in enumerate(objects):
         final_list = []
@@ -144,13 +145,11 @@ def monitor_datalog(request, content):
             (name,attr) = attr.split("_", 1)
             if obj_name == name:
                 final_list.append(attr)
-                LOG.error("final_list : %s" % attr)
 
         # register object
         sentence = ""
         if final_list:
             sentence = objs.object_register(request, obj_name, final_list)
-            LOG.error("==== sentence  %s====" % sentence)
         if sentence:
             objs.create_rule(request, sentence)
             datalog += sentence + "\n\n"

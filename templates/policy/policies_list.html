@@ -49,12 +49,10 @@
 		    rule+="&nbsp;&nbsp;&nbsp;&nbsp;"+parts[4]+"<br>";
 		
 		   var result = parts[6]
-            //var result="result"
 		    var datalog = parts[5]
-            //var datalog="datalog"
-		    //datalog = datalog.replace("\:-", "\:-\n");
-		    //var replaceStr="),";
-		    //datalog = datalog.replace(new RegExp(replaceStr,'gm'), "),\n");
+		    datalog = datalog.replace(/:-/g, ":-<br>");
+            datalog = datalog.replace(/\n/g, "<br>")
+		    datalog = datalog.replace(/\),/g, "),<br>");
 
             rule_="Name:"+parts[0]+"<br/>Objects:"+parts[1]+"<br/>Conditions:"+parts[2]+"<br/>Actions:"+parts[3]+"<br/>Data:"+parts[4];
 		    var data0='<tr><td>'+rule+'</td></tr>';
