@@ -16,7 +16,7 @@ from horizon import messages
 from openstack_dashboard.api import congress
 
 import objects as objs
-import db_object as db
+import models as db
 import logging
 import sys,os
 
@@ -134,10 +134,6 @@ def monitor_datalog(request, content):
             if con:
                 rule_t += "," + create_sentence_from_conditions(con, onymous_attr, attr_mp)
 
-    LOG.error("---------------------------")
-    for i in onymous_attr:
-        LOG.error("attr : %s" % i)
-    LOG.error("---------------------------")
     # generate subtarget part
     for i, obj_name in enumerate(objects):
         final_list = []

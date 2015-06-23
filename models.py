@@ -13,8 +13,6 @@
 # under the License.
 
 
-#  hard-coding temporarily
-
 server_contains = [ ('nova', 'servers', ['server_id', 'name', 'status'], {'id':'server_id'}),
                     ('keystone', 'users', ['username', 'enabled', 'email'], {'id':'user_id'}), 
                     ('neutronv2', 'security_groups', ['tenant_security_group_id','tenant_security_group_name'], 

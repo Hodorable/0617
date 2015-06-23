@@ -5,30 +5,10 @@ from oslo_db.sqlalchemy import models
 from sqlalchemy.ext import declarative
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from oslo.config import cfg
 
-database_group = cfg.OptGroup(
-    name='database', 
-    title='databaseMQ options'
-)
-
-database_con_opt = cfg.StrOpt('connection',
-                             default='mysql+mysqlconnector://root:password@localhost:3306/congress',
-                             help='use connect mysql') 
-CONF = cfg.CONF
-
-CONF.register_group(database_group)
-CONF.register_opt(database_con_opt, database_group)
-
-def get_conn():
-     
-    CONF(default_config_files=['/etc/congress/congress.conf'])
-    #CONF()
-    return  str(CONF.database.connection)
 
 BaseModel = declarative.declarative_base()
-str_conn = get_conn()
-engine = create_engine(str_conn)
+engine = create_engine('mysql+mysqlconnector://root:password@localhost:3306/congress')
 Session = sessionmaker(bind=engine)
 def init_db():
     BaseModel.metadata.create_all(engine)

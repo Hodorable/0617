@@ -13,7 +13,7 @@
 # under the License.
 
 import sys,logging
-import db_object as db
+import models as db
 from horizon import messages
 from openstack_dashboard.api import congress as cg_api
 LOG = logging.getLogger(__name__)
@@ -21,10 +21,6 @@ LOG = logging.getLogger(__name__)
 
 def get_object(request, obj_name, contains, keys, final_list):
 
-    LOG.error("-------------%s-------------" % obj_name)
-    for i in final_list:
-        LOG.error("final_list : %s" % i)
-    LOG.error("-------------%s-------------" % obj_name)
     # generate head
     sentence = obj_name
     for i, attr in enumerate(final_list):
@@ -34,7 +30,7 @@ def get_object(request, obj_name, contains, keys, final_list):
 
     c = 0
     f = True
-    for i,(dname, tname, lst, mp) in enumerate(contains) :
+    for j,(dname, tname, lst, mp) in enumerate(contains) :
         try:
             schema = cg_api.datasource_table_schema_get_by_name(request, dname, tname)
             sen = dname + cg_api.TABLE_SEPARATOR + tname
@@ -49,7 +45,7 @@ def get_object(request, obj_name, contains, keys, final_list):
                 else:
                     sen += "v%d" % c
                     c += 1
-            if not i or not ignore:
+            if j == 0 or not ignore:
                 if not f:
                     sentence += ","
                 f = False
