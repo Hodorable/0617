@@ -1,0 +1,203 @@
+<noscript><h3>{{ step }}</h3></noscript>
+{{ step.get_help_text }}
+{% include 'horizon/common/_form_errors.html' with form=form %}
+<div class="row">
+  <div class="col-sm-6">
+
+    <div class="form-group{% if form.condition_columns.errors %} has-error{% endif %} {{ form.condition_columns.css_classes }}">
+      <label class="control-label{% if form.condition_columns.field.required %} {{ form.required_css_class }}{% endif %}" for="condition_columns">{{ form.condition_columns.label }}</label>
+      {% if form.condition_columns.help_text %}
+        <span class="help-icon" data-toggle="tooltip" data-placement="top" title="{{ form.condition_columns.help_text|safe }}"><span class="fa fa-question-circle"></span></span>
+      {% endif %}
+      <input class="hidden" id="condition_columns" name="condition_columns" type="text" value="{{ form.condition_columns.value }}" />
+      <table id="condition_columns_table" class="table table-condensed">
+        {% for left,op,right in condition_columns_list %}
+        <tr id="condition_column_{{ forloop.counter0 }}" class="condition_column">
+<!--
+          <td class="borderless input-cell">
+            <input class="form-control conditon-column-input" name="condition_column_{{ forloop.counter0 }}" type="text" value="{{ column }}" placeholder="e.g. name" pattern="[^0-9].*" title="Name cannot begin with a number" />
+          </td>
+-->
+          <td class="ui-front borderless input-cell">
+            <div class="">
+              <select id="con_left_{{ forloop.counter0 }}" class="form-control object-attr con-left" name="con_left_{{ forloop.counter0 }}" style="width:250px;">
+                {% for obj_name, attr in attr_list %}
+                  {% for attri in attr %}
+                    <option value="{{ obj_name }}_{{ attri }}">{{ obj_name }}_{{ attri }}</option>
+                  {% endfor %}
+                {% endfor %}
+              </select>
+            </div>
+          </td>
+          <td class="ui-front borderless input-cell">
+            <div class="">
+              <select id="con_op_{{ forloop.counter0 }}" class="form-control join-op" name="con_op_{{ forloop.counter0 }}" style="width:150px;">
+                {% for name,value in symbols %}
+                  <option value="{{ value }}">{{ name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </td>
+          <td class="ui-front borderless input-cell">
+            <div class="">
+              <select id="con_right_{{ forloop.counter0 }}" class="form-control object-attr con-right" name="con_right_{{ forloop.counter0 }}" style="width:250px;">
+                {% for obj_name, attr in attr_list %}
+                  {% for attri in attr %}
+                    <option value="{{ obj_name }}_{{ attri }}">{{ obj_name }}_{{ attri }}</option>
+                  {% endfor %}
+                {% endfor %}
+              </select>
+            </div>
+          </td>
+          <td class="borderless button-cell">
+            <a class="{% if forloop.first %}hidden {% endif %}remove-condition-column-button btn btn-xs btn-primary">&#8211;</a>
+          </td>
+        </tr>{% endfor %}
+        <tr>
+          <td colspan="2" class="borderless input-errors">
+            {% for error in form.conditions_columns.errors %}
+              <span class="help-block alert alert-danger {{ form.error_css_class }}">{{ error }}</span>
+            {% endfor %}
+          </td>
+        </tr>
+      </table>
+      <a id="add_condition_column_button" class="btn btn-xs btn-primary" data-count="{{ condition_columns_count }}">+</a>
+
+      <table id="value_columns_table" class="table table-condensed">
+        {% for v in value_columns_list %}
+        <tr id="value_column_{{ forloop.counter0 }}">
+<!--
+          <td class="borderless input-cell">
+            <input class="form-control conditon-column-input" name="condition_column_{{ forloop.counter0 }}" type="text" value="{{ column }}" placeholder="e.g. name" pattern="[^0-9].*" title="Name cannot begin with a number" />
+          </td>
+-->
+          <td class="ui-front borderless input-cell">
+            <div class="">
+              <select id="value_{{ forloop.counter0 }}" class="form-control object-attr attr-value" name="value_{{ forloop.counter0 }}" style="width:250px;">
+                {% for obj_name, attr in attr_list %}
+                  {% for attri in attr %}
+                    <option value="{{ obj_name }}_{{ attri }}">{{ obj_name }}_{{ attri }}</option>
+                  {% endfor %}
+                {% endfor %}
+              </select>
+            </div>
+          </td>
+          <td class="borderless button-cell">
+            <a class="{% if forloop.first %}hidden {% endif %}remove-value-column-button btn btn-xs btn-primary">&#8211;</a>
+          </td>
+        </tr>{% endfor %}
+      </table>
+      <a id="add_value_column_button" class="btn btn-xs btn-primary" data-count="{{ value_columns_count }}">+</a>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+    /* Add another condition table column. */
+    function add_condition_column(evt) {
+        evt.preventDefault();
+        var $button = $(this);
+        var $tr = $('#condition_column_0').clone();
+
+        var count = $button.attr('data-count');
+        var cid = parseInt(count);
+        $button.attr('data-count', cid +1);
+
+        $tr.attr('id', 'condition_column_' + cid);
+        $tr.find('select[name]').val('').each(function() {
+            this.name = this.name.replace(/^(.+_)\d+$/, '$1' +cid);
+            this.id = this.name;
+        });
+        $tr.find('.remove-condition-column-button').removeClass('hidden');
+        $('#condition_columns_table').find('tr:last').before($tr);
+    }
+    /* Remove one condition table column. */    
+    function remove_condition_column(evt) {
+        evt.preventDefault();
+        var $a = $(this);
+        var $tr = $a.closest('tr');
+        $tr.remove();
+    }
+    /* Add another value table column. */
+    function add_value_column(evt) {
+        evt.preventDefault();
+        var $button = $(this);
+        var $tr = $('#value_column_0').clone();
+
+        var count = $button.attr('data-count');
+        var cid = parseInt(count);
+        $button.attr('data-count', cid +1);
+
+        $tr.attr('id', 'value_column_' + cid);
+        $tr.find('select[name]').val('').each(function() {
+            this.name = this.name.replace(/^(.+_)\d+$/, '$1' +cid);
+            this.id = this.name;
+        });
+        $tr.find('.remove-value-column-button').removeClass('hidden');
+        $('#value_columns_table').find('tr:last').after($tr);
+    }
+    /* Remove one value table column. */    
+    function remove_value_column(evt) {
+        evt.preventDefault();
+        var $a = $(this);
+        var $tr = $a.closest('tr');
+        $tr.remove();
+    }
+    $(document).ready(function() {
+
+        var $doc = $(document);
+        $('#add_condition_column_button').click(add_condition_column);
+        $doc.on('click',
+             '#condition_columns_table a.remove-condition-column-button',
+              remove_condition_column);
+        $('#add_value_column_button').click(add_value_column);
+        $doc.on('click',
+             '#value_columns_table a.remove-value-column-button',
+              remove_value_column);
+
+        /* Get value in ObjectSelect Step */
+        $('.button-next').click( function() {
+            var context="";
+            var f=1;
+            $(".object_select_members .display_name").each( function(i,e) {
+                context+=($(e).text()+",");
+                console.log($(e).text());
+            });
+            $.get("/admin/policy/create",{mesg:"adasd",flag:f}); 
+            $.get("/admin/policy/get",{mesg:context,flag:f}, function(data){
+                var attrs = data.split(',');    
+                $('.object-attr').each(function() {
+                    $(this).empty();
+                    for(var i=0; i<attrs.length; i++) {
+                        $(this).append("<option value='"+attrs[i]+"' class='one-attr'>"+attrs[i]+ "</option>");
+                    }
+                });
+            });
+            
+        });
+
+        $('.button-final').mouseover( function() {
+            var a1 = new Array();
+            $('.con-left').each(function() {
+                a1.push($(this).val());
+            });
+            var op = new Array();
+            $('.join-op').each(function() {
+                op.push($(this).val());
+            });
+            var a2 = new Array();
+            $('.con-right').each(function() {
+                a2.push($(this).val());
+            });
+            var str1 = "";
+            for (var i=0; i<a1.length; i++){
+                str1+=(op[i]+':'+a1[i]+','+a2[i]+';');
+            }
+            var str2 = "";
+            $('.attr-value').each(function() {
+                str2+=($(this).val()+';');
+            });
+            $.get("/admin/policy/create",{attr:str1,val:str2,f:1}); 
+        });
+    });
+</script>

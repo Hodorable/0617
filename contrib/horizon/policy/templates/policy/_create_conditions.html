@@ -1,0 +1,19 @@
+<noscript><h3>{{step}}</h3></noscript>
+{{ step.get_help_text }}
+{% include 'horizon/commom/_form_errors.html' with form=form %}
+<div class="row">
+    <div class="col-sm-12">
+        <table id ="conditions_table" class="table table-condensed">
+         <tr>
+          <td colspan="4">
+           <div class="form-group">
+            <label class="control-label">Only including rows where:</label>
+           </div>
+          </td>
+         <tr>
+         {% for left, op, right in joins %}
+          <tr id="join_{{ forloop.counter0 }}">
+           <td class="ui-front boderless input-cell">
+            <div class="has-feedback ac">
+             <input id="join_left{{ forloop.counter0 }}" class="form-control ac-columns" name="join_left_{{ forloop.counter0 }}" type="text" value="{{ left }}" placeholder="e.g."">
+            <div >
